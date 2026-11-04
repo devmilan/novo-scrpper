@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Buyer Search Tool
 
-## Getting Started
+Single-page B2B buyer discovery app backed by the local Google Maps scraper in
+`../external-tools/google-maps-scraper-kit`. Enter a natural-language search such as
+`plastic manufacturer list in Nepal`; the app sends that query to the scraper without
+requiring separate country or buyer-type selections. Filter results client-side, and
+export CSV or copy a TSV table.
 
-First, run the development server:
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The app starts the scraper engine automatically with
+`python3 scripts/engine.py start` if it is not already running. To point the app at a
+different engine or scraper checkout, set:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+SCRAPER_ENGINE_URL=http://127.0.0.1:8080
+SCRAPER_DIR=/absolute/path/to/google-maps-scraper-kit
+SCRAPER_PYTHON=python3
+# SCRAPER_API_KEY=optional-engine-api-key
+```
 
-## Learn More
+See `.env.example`.
 
-To learn more about Next.js, take a look at the following resources:
+The search API is local to the Next.js app:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `POST /api/search` validates a search query and starts a Google Maps scraper job.
+- `GET /api/search/:searchId` returns status, progress, and results as they arrive.
+- `POST /api/search/:searchId/cancel` stops a running job.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Search jobs and result snapshots are held in app memory; they are not searchable after
+the app process restarts. The existing scraper engine stores its own job files in its
+local `.engine` directory. Only one app-started search runs at a time, and identical
+retries while a job is starting or running return the existing search rather than
+launching a duplicate.
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev    # development server
+npm run build  # production build + type check
+npm run start  # serve the production build
+npm run lint   # eslint
+```
